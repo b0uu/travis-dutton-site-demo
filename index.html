@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Travis Dutton | Mechanical Engineering</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* CAD workspace, v2.1. IBM Plex Sans throughout: drawn by IBM to feel engineered rather than friendly.
+   Traditional top navigation; the feature tree moves into the page as the Projects "model browser":
+   pick a part in the tree, the viewport and property panel beside it update. No JavaScript: radio inputs + CSS.
+   On the projects page, document tabs (like open files in CAD) replace the sidebar. */
+:root{
+  --chrome:#EDEFF2; --panel:#F7F8FA; --edge:#C9CFD6; --text:#1C232B; --muted:#56616D;
+  --vp-top:#D3DBE4; --vp-bottom:#FAFBFC; --select:#1763C6; --select-bg:#DCE8F8; --white:#FFFFFF;
+  --display:"IBM Plex Sans", "Segoe UI", sans-serif; --sans:"IBM Plex Sans", "Segoe UI", sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--chrome);color:var(--text);font:16px/1.6 var(--sans)}
+a{color:var(--select);text-underline-offset:3px}
+a:focus-visible{outline:2px solid var(--select);outline-offset:2px}
+img{display:block;max-width:100%}
+[id]{scroll-margin-top:64px}
+.sr{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+
+.view{display:none}
+#home{display:block}
+#work:target,#work:has(:target){display:block}
+body:has(#work:target, #work :target) #home{display:none}
+
+/* ribbon: ordinary top navigation in CAD clothing */
+.ribbon{background:var(--white);border-bottom:1px solid var(--edge);position:sticky;top:0;z-index:10}
+.ribbon-in{max-width:1320px;margin:0 auto;display:flex;align-items:stretch;justify-content:space-between;flex-wrap:wrap;padding:0 24px}
+.ribbon .doc{display:flex;align-items:center;gap:10px;padding-right:24px;font:700 16px var(--display);color:var(--text);text-decoration:none;min-height:56px}
+.ribbon nav{display:flex;flex-wrap:wrap;flex:1}
+.ribbon nav a{display:flex;align-items:center;padding:0 18px;min-height:56px;color:var(--text);text-decoration:none;font-weight:500;border-bottom:3px solid transparent}
+.ribbon nav a:hover{background:var(--select-bg)}
+.ribbon nav a[href="#home"]{border-bottom-color:var(--select)}
+body:has(#work:target, #work :target) .ribbon nav a[href="#home"]{border-bottom-color:transparent}
+body:has(#work:target, #work :target) .ribbon nav a[href="#work"]{border-bottom-color:var(--select)}
+.ribbon .cta{display:flex;align-items:center}
+.ribbon nav a.mob{display:none}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border:1px solid var(--edge);background:var(--white);color:var(--text);text-decoration:none;font-weight:600;font-size:15px;border-radius:3px}
+.btn.primary{background:var(--select);border-color:var(--select);color:#fff}
+.btn:hover{border-color:var(--select)}
+.btn.primary:hover{background:#0F4E9F}
+
+.wrap{max-width:1320px;margin:0 auto;padding:0 24px}
+
+/* viewport */
+.vp{position:relative;background:linear-gradient(180deg,var(--vp-top),var(--vp-bottom));overflow:hidden}
+.vp-doc{position:absolute;left:20px;top:14px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.vp-label{position:absolute;right:20px;bottom:14px;font-size:13px;color:var(--muted)}
+.triad{position:absolute;left:20px;bottom:16px}
+
+.hero-vp{border-bottom:1px solid var(--edge)}
+.hero{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:24px;align-items:center;padding:80px 0 88px;min-height:580px}
+.hero h1{font:600 clamp(40px,4.6vw,64px)/1 var(--display);white-space:nowrap;letter-spacing:-.02em;margin:0 0 20px}
+.idrow{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin:0 0 24px}
+.idrow h1{margin:0}
+.headshot{width:156px;height:156px;flex:none;object-fit:cover;-webkit-mask-image:radial-gradient(closest-side circle at 50% 50%,#000 68%,transparent 100%);mask-image:radial-gradient(closest-side circle at 50% 50%,#000 68%,transparent 100%)}
+.hero .lede{font-size:20px;line-height:1.5;max-width:34ch;margin:0 0 28px;color:#2C3742}
+.hero .btns{display:flex;gap:10px;flex-wrap:wrap}
+.hero-fig{margin:0;justify-self:end;max-width:640px;width:100%}
+.hero-fig figcaption{font-size:14px;line-height:1.5;color:var(--muted);max-width:52ch;margin:4px auto 0;text-align:center}
+.hero-fig figcaption strong{color:var(--text);font-weight:600}
+.hero .model{mix-blend-mode:multiply;width:100%;
+  -webkit-mask-image:radial-gradient(ellipse 62% 62% at 50% 50%,#000 55%,transparent 100%);mask-image:radial-gradient(ellipse 62% 62% at 50% 50%,#000 55%,transparent 100%)}
+
+
+section.block{padding-top:72px;padding-bottom:72px}
+.block h2{font:600 28px/1.2 var(--display);letter-spacing:-.01em;margin:0 0 6px}
+.block .sub{margin:0 0 28px;color:var(--muted)}
+
+/* model browser: tree + viewport + properties */
+.browser{display:grid;grid-template-columns:300px minmax(0,1fr);background:var(--white);border:1px solid var(--edge);border-radius:4px;overflow:hidden}
+.mb-tree{background:var(--panel);border-right:1px solid var(--edge);padding:12px 0;font-size:15px}
+.mb-root{display:flex;align-items:center;gap:8px;font-weight:600;padding:4px 16px 12px;border-bottom:1px solid var(--edge);margin-bottom:8px;font-size:14px}
+.mb-tree ul{list-style:none;margin:0;padding:0 0 0 18px;margin-left:22px;border-left:1px dotted #9AA4AF}
+.mb-tree label{display:flex;align-items:center;gap:9px;padding:8px 12px 8px 8px;cursor:pointer;border-radius:2px;margin-right:10px}
+.mb-tree label:hover{background:var(--select-bg)}
+.mb-tree label small{margin-left:auto;color:var(--muted);font-size:12px}
+.mb-group{display:flex;align-items:center;gap:8px;padding:6px 16px;color:var(--muted);font-weight:600;font-size:14px}
+.mb-tree{display:flex;flex-direction:column}
+.mb-tree .extra{margin-top:auto;padding:16px 16px 4px}
+.mb-tree .extra .btn{width:100%;justify-content:center}
+
+.pv{display:none;grid-template-columns:minmax(0,1fr) 300px;min-height:520px}
+.pv .vp{display:grid;place-items:center;padding:48px 32px 56px;border-right:1px solid var(--edge)}
+.pv .vp img{max-height:380px;width:auto;mix-blend-mode:multiply;-webkit-mask-image:radial-gradient(ellipse 60% 60% at 50% 50%,#000 60%,transparent 100%);mask-image:radial-gradient(ellipse 60% 60% at 50% 50%,#000 60%,transparent 100%)}
+.pv .vp img.photo{mix-blend-mode:normal;-webkit-mask-image:none;mask-image:none;border:1px solid var(--edge);max-height:360px}
+.pv .side{padding:24px;display:flex;flex-direction:column;gap:18px}
+.pv h3{margin:0;font:600 22px/1.2 var(--display)}
+.pv .side p{margin:0;color:#2C3742;font-size:15px}
+.pv .side .btn{align-self:flex-start;margin-top:auto}
+.pv.textonly{grid-template-columns:1fr}
+.pv.textonly .side{max-width:640px;padding:40px}
+.pv.textonly .pm{max-width:420px}
+.mb-group + ul + .mb-group{margin-top:8px}
+.ph{display:grid;place-items:center;text-align:center;color:var(--muted);font-size:14px;padding:24px;width:min(100%,520px);aspect-ratio:16/10;border:1.5px dashed #9AA4AF;background:rgba(255,255,255,.5)}
+
+#r1:checked ~ .browser .pv1,#r2:checked ~ .browser .pv2,#r3:checked ~ .browser .pv3,#r4:checked ~ .browser .pv4{display:grid}
+#r1:checked ~ .browser label[for="r1"],#r2:checked ~ .browser label[for="r2"],#r3:checked ~ .browser label[for="r3"],#r4:checked ~ .browser label[for="r4"]{background:var(--select-bg);color:var(--select);font-weight:600;box-shadow:inset 2px 0 0 var(--select)}
+#r1:focus-visible ~ .browser label[for="r1"],#r2:focus-visible ~ .browser label[for="r2"],#r3:focus-visible ~ .browser label[for="r3"],#r4:focus-visible ~ .browser label[for="r4"]{outline:2px solid var(--select);outline-offset:-2px}
+
+/* property panel */
+.pm{font-size:15px;border:1px solid var(--edge);border-radius:3px;background:var(--white)}
+.pm h4{margin:0;padding:8px 12px;font:700 13px var(--display);border-bottom:1px solid var(--edge);background:var(--panel)}
+.pm dl{margin:0;padding:4px 12px 8px}
+.pm dl div{display:grid;grid-template-columns:84px 1fr;gap:10px;padding:6px 0;border-bottom:1px solid #EEF0F3}
+.pm dl div:last-child{border-bottom:0}
+.pm dt{color:var(--muted)}
+.pm dd{margin:0;font-weight:500}
+
+/* experience + side panels */
+.split{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:28px;align-items:start}
+.jobs{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.job{background:var(--white);border:1px solid var(--edge);border-radius:3px;padding:18px 20px}
+.job header{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.job h3{margin:0;font:600 18px var(--display)}
+.job .when{color:var(--muted);font-size:14px}
+.job .org{margin:0 0 8px;color:var(--muted)}
+.job ul{margin:0;padding-left:20px}
+.stack{display:grid;gap:14px}
+.stack .pm dl div{grid-template-columns:1fr;gap:0}
+
+.block h2 + .pm, .block h2 + .split{margin-top:22px}
+.contact-pm dl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:0}
+.contact-pm dl div{grid-template-columns:1fr;gap:2px;padding:14px 16px;border-bottom:0;border-right:1px solid #EEF0F3}
+.contact-pm dl div:last-child{border-right:0}
+
+/* projects page */
+.doctabs{background:var(--panel);border-bottom:1px solid var(--edge)}
+.doctabs .wrap{display:flex;flex-wrap:wrap;gap:4px 22px;padding-top:12px;padding-bottom:12px;font-size:14px}
+.doctabs a{color:var(--muted);text-decoration:none}
+.doctabs a:hover{color:var(--select);text-decoration:underline}
+.case{border-bottom:1px solid var(--edge)}
+.case .vp .wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:28px;padding-top:56px;padding-bottom:64px;align-items:start}
+.case h2{font:600 clamp(28px,3.2vw,38px)/1.1 var(--display);letter-spacing:-.015em;margin:0 0 18px}
+.case .story p{margin:0 0 14px;max-width:62ch}
+.case .shots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:20px;align-items:start}
+.case .shots figure{margin:0;background:var(--white);border:1px solid var(--edge);border-radius:3px;overflow:hidden}
+.case .shots .wide{grid-column:span 2}
+.case .shots img{width:100%;aspect-ratio:4/3;object-fit:contain;background:#F4F6F8}
+.case .shots .wide img{aspect-ratio:2/1}
+.case .shots figcaption{font-size:13px;color:var(--muted);padding:6px 10px}
+.case .shots .ph{width:100%;grid-column:1/-1;aspect-ratio:2/1}
+.case .pm{position:sticky;top:76px}
+
+
+@media (max-width:960px){
+  .ribbon-in{padding:0}
+  .ribbon .doc{width:100%;padding:0 20px;border-bottom:1px solid var(--edge);min-height:48px}
+  .ribbon nav{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto}
+  .ribbon nav a{padding:0 14px;white-space:nowrap;min-height:48px}
+  .ribbon nav a.mob{display:flex}
+  .ribbon .cta{display:none}
+  .wrap{padding:0 20px}
+  .hero,.split,.case .vp .wrap{grid-template-columns:1fr}
+  .hero{padding:48px 0 64px;min-height:0}
+  .hero h1{white-space:normal}
+  .headshot{width:124px;height:124px}
+  .contact-pm dl{grid-template-columns:1fr}
+  .contact-pm dl div{border-right:0;border-bottom:1px solid #EEF0F3}
+  .browser{grid-template-columns:1fr}
+  .mb-tree{border-right:0;border-bottom:1px solid var(--edge)}
+  .pv{grid-template-columns:1fr;min-height:0}
+  .pv .vp{border-right:0;border-bottom:1px solid var(--edge);padding:40px 16px 48px}
+  .pv .vp img{max-height:260px}
+  [id]{scroll-margin-top:104px}
+  .case .shots{grid-template-columns:1fr}
+  .case .shots .wide{grid-column:auto}
+  .case .pm{position:static}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="ribbon">
+  <div class="ribbon-in">
+    <a class="doc" href="#home">
+      Travis Dutton
+    </a>
+    <nav aria-label="Main">
+      <a href="#home">Overview</a>
+      <a href="#work">Portfolio</a>
+      <a class="mob" href="travis-dutton-resume.pdf">Resume</a>
+    </nav>
+    <div class="cta"><a class="btn" href="travis-dutton-resume.pdf">Resume (PDF)</a></div>
+  </div>
+</header>
+
+<section id="work" class="view" aria-label="Portfolio">
+  <nav class="doctabs" aria-label="Portfolio projects">
+    <div class="wrap">
+      <a href="#p1">Soft robotics</a>
+      <a href="#p2">Miniature arm controller</a>
+      <a href="#p3">Over terrain vehicle</a>
+    </div>
+  </nav>
+
+  <article class="case" id="p1">
+    <div class="vp"><div class="wrap">
+      <div class="story">
+        <h2>Soft robotics</h2>
+        <p>I research microfluidics in the Bioinspired Advanced Manufacturing Lab at the University of Maryland. I iterate on fluidic actuator and microchip designs, and I test microfluidic diodes and transistors that will eventually be used to build a soft robotic hand.</p>
+        <p>Below are one of my actuator designs in SolidWorks, a printed resin actuator of a similar design at rest and actuated, and my microchip design. The chip is 3D printed in resin and gives a micro- to mesoscale interface, which makes the diodes and transistors easier to post-process and test.</p>
+        <div class="shots">
+          <figure class="wide"><img src="actuator-cad.jpg" alt="Fluidic actuator design, SolidWorks render"><figcaption>Actuator design, SolidWorks</figcaption></figure>
+          <figure><img src="actuator-rest.jpg" alt="Printed resin actuator in its resting state"><figcaption>Resin actuator, resting</figcaption></figure>
+          <figure><img src="actuator-bent.jpg" alt="Printed resin actuator bent when actuated"><figcaption>Actuated. The checkered background helps with data collection and analysis.</figcaption></figure>
+          <figure><img src="chip-top.jpg" alt="Microchip design, open view"><figcaption>Microchip design, view 1</figcaption></figure>
+          <figure><img src="chip-iso.jpg" alt="Microchip design, closed view"><figcaption>Microchip design, view 2</figcaption></figure>
+        </div>
+      </div>
+      <div class="pm"><h4>Properties</h4><dl>
+        <div><dt>Lab</dt><dd>Bioinspired Advanced Manufacturing Lab, UMD</dd></div>
+        <div><dt>Role</dt><dd>Undergraduate Researcher, CAD Lead</dd></div>
+        <div><dt>Dates</dt><dd>Sep 2025 to present</dd></div>
+        <div><dt>Tools</dt><dd>SolidWorks, resin 3D printing</dd></div>
+        <div><dt>Papers</dt><dd>2 co-authored (2026)</dd></div>
+      </dl></div>
+    </div></div>
+  </article>
+
+  <article class="case" id="p2">
+    <div class="vp"><div class="wrap">
+      <div class="story">
+        <h2>Miniature arm controller</h2>
+        <p>For the UMD Loop Rover Team, I worked with eight other students to produce a design option for a miniature arm controller (MAC). The MAC controls the rover's arm. Because it is a directly scaled-down replica of the arm, it makes the arm easier to control.</p>
+        <p>I did most of my team's CAD in SolidWorks and was most involved with the base and its interface with the rest of the MAC. The interface lets the arm rotate freely and stay resilient under loading over time.</p>
+        <div class="shots">
+          <figure><img src="mac-assembly.jpg" alt="Full MAC assembly"><figcaption>Full MAC assembly</figcaption></figure>
+          <figure><img src="mac-base.jpg" alt="Base-to-MAC interface"><figcaption>Base-to-MAC interface</figcaption></figure>
+        </div>
+      </div>
+      <div class="pm"><h4>Properties</h4><dl>
+        <div><dt>Team</dt><dd>UMD Loop Rover Team, 9 students</dd></div>
+        <div><dt>Role</dt><dd>Most of the CAD; base and interface</dd></div>
+        <div><dt>Tools</dt><dd>SolidWorks</dd></div>
+      </dl></div>
+    </div></div>
+  </article>
+
+  <article class="case" id="p3">
+    <div class="vp"><div class="wrap">
+      <div class="story">
+        <h2>Over terrain vehicle</h2>
+        <p>Seven other students and I built an over terrain vehicle (OTV) that could drive autonomously to a pylon, through an obstacle course, and to a destination zone.</p>
+        <p>I modeled the vehicle's parts and assembled them in Fusion 360. After the first build, we analyzed how the components performed and kept improving the design.</p>
+        <div class="shots">
+          <figure><img src="otv-photo.jpg" alt="The finished OTV"><figcaption>The OTV</figcaption></figure>
+          <figure><img src="otv-cad.jpg" alt="Fusion 360 model of the OTV"><figcaption>CAD model, Fusion 360</figcaption></figure>
+        </div>
+      </div>
+      <div class="pm"><h4>Properties</h4><dl>
+        <div><dt>Team</dt><dd>8 students</dd></div>
+        <div><dt>Role</dt><dd>Part modeling, full assembly</dd></div>
+        <div><dt>Dates</dt><dd>Feb to May 2025</dd></div>
+        <div><dt>Tools</dt><dd>Fusion 360</dd></div>
+      </dl></div>
+    </div></div>
+  </article>
+</section>
+
+<section id="home" class="view">
+  <div class="vp hero-vp">
+    <span class="vp-doc"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.3"/><rect x="8.5" y="8.5" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 4.5h3.5v4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>Travis_Dutton.SLDASM</span>
+    <div class="wrap">
+      <div class="hero">
+        <div>
+          <div class="idrow"><img class="headshot" src="headshot.jpg" alt="Travis Dutton" width="156" height="156"><h1>Travis Dutton</h1></div>
+          <p class="lede">Mechanical engineering student at the University of Maryland. I model, print and test hardware for soft robotics research and a competition rover.</p>
+          <div class="btns"><a class="btn primary" href="#projects">Browse projects</a><a class="btn" href="travis-dutton-resume.pdf">Resume (PDF)</a></div>
+        </div>
+        <figure class="hero-fig">
+          <img class="model" src="mac-assembly.jpg" alt="Miniature arm controller assembly, SolidWorks render">
+          <figcaption><strong>Miniature arm controller, UMD Loop Rover Team.</strong> A scaled-down replica of the rover's arm, used to control it. I did most of the CAD in SolidWorks, including the base and its interface.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+
+
+  <section class="block wrap" id="projects" aria-labelledby="projects-h">
+    <h2 id="projects-h">Projects</h2>
+    <p class="sub">Pick a project in the tree to preview it.</p>
+
+    <input class="sr" type="radio" name="proj" id="r1" checked>
+    <input class="sr" type="radio" name="proj" id="r2">
+    <input class="sr" type="radio" name="proj" id="r3">
+    <input class="sr" type="radio" name="proj" id="r4">
+
+    <div class="browser">
+      <div class="mb-tree">
+        <div class="mb-root"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="6" height="6" fill="none" stroke="#1763C6" stroke-width="1.3"/><rect x="8.5" y="8.5" width="6" height="6" fill="none" stroke="#1763C6" stroke-width="1.3"/><path d="M7.5 4.5h3.5v4" fill="none" stroke="#1763C6" stroke-width="1.3"/></svg>Travis_Dutton.SLDASM</div>
+        <span class="mb-group"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 3.5h4l1 1.5h6v7.5h-11z" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>Portfolio</span>
+        <ul>
+          <li><label for="r1"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1 12.5 4v6L7 13 1.5 10V4z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>Soft robotics<small>2025</small></label></li>
+          <li><label for="r2"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1 12.5 4v6L7 13 1.5 10V4z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>Arm controller<small>2026</small></label></li>
+          <li><label for="r3"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1 12.5 4v6L7 13 1.5 10V4z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>Over terrain vehicle<small>2025</small></label></li>
+        </ul>
+        <span class="mb-group"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 3.5h4l1 1.5h6v7.5h-11z" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>Other projects</span>
+        <ul>
+          <li><label for="r4"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1 12.5 4v6L7 13 1.5 10V4z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>Wooden I-beam<small>2026</small></label></li>
+        </ul>
+        <div class="extra"><a class="btn" href="#work">View portfolio</a></div>
+      </div>
+
+      <div class="previews">
+        <div class="pv pv1">
+          <div class="vp"><img src="actuator-cad.jpg" alt="Fluidic actuator design, SolidWorks render"><span class="vp-label">Actuator design, SolidWorks</span></div>
+          <div class="side">
+            <h3>Soft robotics</h3>
+            <p>Fluidic actuator and microchip designs for a future soft robotic hand, plus testing of microfluidic diodes and transistors.</p>
+            <div class="pm"><h4>Properties</h4><dl><div><dt>Role</dt><dd>CAD Lead</dd></div><div><dt>Tools</dt><dd>SolidWorks, resin printing</dd></div><div><dt>Papers</dt><dd>2 co-authored</dd></div></dl></div>
+            <a class="btn primary" href="#p1">Open in portfolio</a>
+          </div>
+        </div>
+        <div class="pv pv2">
+          <div class="vp"><img src="mac-base.jpg" alt="Base-to-MAC interface"><span class="vp-label">Base-to-MAC interface, SolidWorks</span></div>
+          <div class="side">
+            <h3>Miniature arm controller</h3>
+            <p>A scaled-down replica of the rover's arm, used to control it. I did most of the CAD, focused on the base and its interface.</p>
+            <div class="pm"><h4>Properties</h4><dl><div><dt>Team</dt><dd>UMD Loop, 9</dd></div><div><dt>Tools</dt><dd>SolidWorks</dd></div></dl></div>
+            <a class="btn primary" href="#p2">Open in portfolio</a>
+          </div>
+        </div>
+        <div class="pv pv3">
+          <div class="vp"><img class="photo" src="otv-photo.jpg" alt="The finished OTV"><span class="vp-label">The OTV</span></div>
+          <div class="side">
+            <h3>Over terrain vehicle</h3>
+            <p>An autonomous vehicle that drives to a pylon, through an obstacle course, and to a destination zone. I modeled and assembled it in Fusion 360.</p>
+            <div class="pm"><h4>Properties</h4><dl><div><dt>Team</dt><dd>8 students</dd></div><div><dt>Tools</dt><dd>Fusion 360</dd></div></dl></div>
+            <a class="btn primary" href="#p3">Open in portfolio</a>
+          </div>
+        </div>
+        <div class="pv pv4 textonly">
+          <div class="side">
+            <h3>Wooden I-beam</h3>
+            <p>Designed a wooden I-beam to withstand a point load in a universal testing machine. Calculations in Python gave a strength-to-weight ratio of over 2,300:1. I compared the predicted failure load with the actual failure load of 1,520 lbf and identified the failure mode.</p>
+            <div class="pm"><h4>Properties</h4><dl><div><dt>Role</dt><dd>Project team member</dd></div><div><dt>Dates</dt><dd>Mar to May 2026</dd></div><div><dt>Tools</dt><dd>Python</dd></div><div><dt>Failure load</dt><dd>1,520 lbf</dd></div></dl></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block wrap" id="experience" style="padding-top:0">
+    <h2>Experience</h2>
+    <div class="split">
+      <ul class="jobs">
+        <li class="job"><header><h3>Chassis Engineer</h3><span class="when">Sep 2026 – now</span></header><p class="org">UMD Loop, University Rover Challenge</p><ul><li>Cutting chassis height 50% to gain top-deck area for the same internal space</li><li>Failure-mode calculations and integration with electrical, arm and science subteams</li></ul></li>
+        <li class="job"><header><h3>Mechanical Engineering Intern</h3><span class="when">May – Aug 2026</span></header><p class="org">Intralox, Baltimore</p><ul><li>Saved 100+ engineering hours a year by automating design work in iLogic</li><li>Conveyor mount that aligns with its transfer on the first attempt</li><li>Bolt placement tool that removed sharp sheet metal contact</li></ul></li>
+        <li class="job"><header><h3>Undergraduate Researcher, CAD Lead</h3><span class="when">Sep 2025 – now</span></header><p class="org">Bioinspired Advanced Manufacturing Lab, UMD</p><ul><li>Lead two researchers on soft robotic hand components</li><li>Three designs through CAD, resin print and test</li></ul></li>
+      </ul>
+      <div class="stack" id="papers">
+        <div class="pm"><h4>Summary</h4><dl>
+          <div><dt>Degree</dt><dd>B.S. Mechanical Engineering, University of Maryland, May 2028</dd></div>
+          <div><dt>Looking for</dt><dd>Summer 2027 mechanical design or R&amp;D internship</dd></div>
+          <div><dt>Based in</dt><dd>College Park, MD</dd></div>
+        </dl></div>
+        <div class="pm"><h4>Papers</h4><dl>
+          <div><dt>IEEE MEMS 2026</dt><dd>3D Nanoprinting Microfluidic Diodes via Ex Situ Direct Laser Writing</dd></div>
+          <div><dt>Hilton Head Workshop 2026</dt><dd>Fabrication of 3D-Nanoprinted Microfluidic Transistors via Ex Situ Direct Laser Writing</dd></div>
+        </dl></div>
+        <div class="pm"><h4>Tools</h4><dl>
+          <div><dt>CAD and PLM</dt><dd>SolidWorks, Inventor, Fusion 360, SolidWorks FEA, Windchill</dd></div>
+          <div><dt>Making</dt><dd>LCD and FDM printing, laser cutting</dd></div>
+          <div><dt>Code</dt><dd>Python, MATLAB, iLogic</dd></div>
+        </dl></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block wrap" id="contact" style="padding-top:0">
+    <h2>Contact</h2>
+    <div class="pm contact-pm"><h4>Contact</h4><dl>
+      <div><dt>Email</dt><dd><a href="mailto:travisdutton38@gmail.com">travisdutton38@gmail.com</a></dd></div>
+      <div><dt>LinkedIn</dt><dd><a href="https://www.linkedin.com/in/travisdutton">linkedin.com/in/travisdutton</a></dd></div>
+      <div><dt>Resume</dt><dd><a href="travis-dutton-resume.pdf">travis-dutton-resume.pdf</a></dd></div>
+      <div><dt>Location</dt><dd>College Park, MD</dd></div>
+    </dl></div>
+  </section>
+</section>
+
+</body>
+</html>
